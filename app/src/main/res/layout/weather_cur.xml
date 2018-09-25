@@ -28,6 +28,7 @@
         android:textColor="@android:color/white"
         android:textSize="15sp"/>
     <TextView
+        android:id="@+id/humidity"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
@@ -35,6 +36,16 @@
         android:layout_marginLeft="15dp"
         android:singleLine="true"
         android:text="湿度:55%"
+        android:textColor="@android:color/white"
+        android:textSize="15dp"/>
+    <TextView
+        android:id="@+id/temperature_cur"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/humidity"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="15dp"
+        android:text="温度:6°C"
         android:textColor="@android:color/white"
         android:textSize="15dp"/>
 </RelativeLayout>
