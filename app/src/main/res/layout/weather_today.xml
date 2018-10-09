@@ -12,7 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:src="@drawable/biz_plugin_weather_qing"/>
+        android:src="@drawable/biz_plugin_weather_baoxue"/>
     <!--今日星期-->
     <TextView
         android:id="@+id/week_today"

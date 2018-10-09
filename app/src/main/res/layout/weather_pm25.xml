@@ -25,6 +25,7 @@
                 android:textSize="12sp"/>
             <!--PM2.5数值-->
             <TextView
+                android:id="@+id/pm_data"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:singleLine="true"
@@ -33,11 +34,11 @@
                 android:textSize="30sp"/>
         </LinearLayout>
         <ImageView
-            android:id="@+id/pm2_5_iamge"
+            android:id="@+id/pm2_5_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="5dp"
-            android:src="@drawable/biz_plugin_weather_0_50"/>
+            android:src="@drawable/biz_plugin_weather_201_300"/>
     </LinearLayout>
     <TextView
         android:id="@+id/pm2_5_quality"
