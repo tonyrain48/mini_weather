@@ -1,10 +1,10 @@
-package com.wxydsb.myweather;
+package com.wxydsb.myweather.miniweather;
 
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
@@ -15,6 +15,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.wxydsb.myweather.R;
 import com.wxydsb.myweather.bean.TodayWeather;
 import com.wxydsb.myweather.util.NetUtil;
 
@@ -35,6 +36,8 @@ public class MainActivity extends Activity implements View.OnClickListener{
     private static final int UPDATE_TODAY_WEATHER=1;
 
     private ImageView mUpdateBtn;
+
+    private  ImageView mCitySelect;
 
     private TextView cityTv,timeTv,humidtyTv,weekTv,pmDataTv,pmQualityTv,temperatureTv,temperatuer_cur_Tv,climateTv,windTv,city_name_Tv;
     private ImageView weatherImg,pmImg;
@@ -58,6 +61,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         SharedPreferences sharedPreferencesmain=getSharedPreferences("config",MODE_PRIVATE);
+        SharedPreferences.Editor editor= sharedPreferencesmain.edit();
         String cityCodemain=sharedPreferencesmain.getString("main_city_code","101010100");
 
         mUpdateBtn=(ImageView) findViewById(R.id.title_update_btn);
@@ -72,6 +76,9 @@ public class MainActivity extends Activity implements View.OnClickListener{
             Log.d("myweather","网络未连接");
             Toast.makeText(MainActivity.this, "网络未连接", Toast.LENGTH_LONG).show();
         }
+
+        mCitySelect=(ImageView) findViewById(R.id.title_city_manager);
+        mCitySelect.setOnClickListener(this);
         initView();
     }
 
@@ -357,6 +364,10 @@ public class MainActivity extends Activity implements View.OnClickListener{
     }
     @Override
     public void onClick(View view){
+        if(view.getId()==R.id.title_city_manager){
+            Intent i=new Intent(this,SelectCity.class);
+            startActivityForResult(i,1);
+        }
         if (view.getId()==R.id.title_update_btn){
             SharedPreferences sharedPreferences=getSharedPreferences("config",MODE_PRIVATE);
             String cityCode=sharedPreferences.getString("main_city_code","101010100");
@@ -371,5 +382,21 @@ public class MainActivity extends Activity implements View.OnClickListener{
                 Toast.makeText(MainActivity.this, "网络未连接", Toast.LENGTH_LONG).show();
             }
         }
+    }
+    protected void onActivityResult(int requestCode,int resultCode,Intent data){
+        if(requestCode==1&&resultCode==RESULT_OK){
+            String newCityCode=data.getStringExtra("cityCode");
+            Log.d("myweather","选择的城市代码为"+newCityCode);
+
+            if(NetUtil.getNetworkState(this)!=NetUtil.NETWORK_NONE){
+                Log.d("myweather","网络已连接");
+                queryWeatherCode(newCityCode);
+            }
+            else{
+                Log.d("myweather","网络未连接");
+                Toast.makeText(MainActivity.this, "网络未连接", Toast.LENGTH_LONG).show();
+            }
+        }
+
     }
 }
