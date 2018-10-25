@@ -23,7 +23,7 @@ public class TodayWeather {
     }
 
     public String getPm25() {
-        return pm25;
+            return pm25;
     }
 
     public String getWendu() {
@@ -31,7 +31,7 @@ public class TodayWeather {
     }
 
     public String getQuality() {
-        return quality;
+            return quality;
     }
 
     public String getShidu() {

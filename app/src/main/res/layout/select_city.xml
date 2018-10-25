@@ -6,6 +6,7 @@
     <RelativeLayout
         android:layout_height="45dp"
         android:layout_width="fill_parent"
+        android:id="@+id/title_top"
         android:background="#ffcd2626">
         <TextView
             android:id="@+id/title_name"
@@ -28,5 +29,16 @@
             android:layout_centerVertical="true"
             android:layout_toRightOf="@id/title_back"
             android:background="#A71717"/>
-    </RelativeLayout>>
+    </RelativeLayout>
+    <RelativeLayout
+        android:layout_height="wrap_content"
+        android:layout_width="fill_parent"
+        android:layout_below="@id/title_top">
+        <ListView
+            android:id="@+id/title_list"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:background="#ffffff">
+        </ListView>
+    </RelativeLayout>
 </RelativeLayout>

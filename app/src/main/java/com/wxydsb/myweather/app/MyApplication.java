@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+//最长维持的生命周期，保证打开app时能读到db
 public class MyApplication extends Application{
     private  static  final String TAG="MyAPP";
 
@@ -23,6 +24,7 @@ public class MyApplication extends Application{
 
     private List<City> mCityList;
 
+//    初始化，打开数据库
     @Override
     public void onCreate(){
         super.onCreate();
@@ -41,6 +43,7 @@ public class MyApplication extends Application{
         }).start();
     }
 
+//    读city列表
     private boolean prepareCityList(){
         mCityList=mCityDB.getAllCity();
         int i=0;
@@ -63,10 +66,12 @@ public class MyApplication extends Application{
         return mApplication;
     }
 
+//    把db中的列表存到android能够读取的数据库中
     private CityDB openCityDB(){
         String path="/data"+ Environment.getDataDirectory().getAbsolutePath()+ File.separator+getPackageName()+File.separator+"databases1"+File.separator+CityDB.CITY_DB_NAME;
         File db=new File(path);
         Log.d(TAG,path);
+//        android中db不存在，新建db地址
         if(!db.exists()){
             String pathfolder="/data"+ Environment.getDataDirectory().getAbsolutePath()+ File.separator+getPackageName()+File.separator+"databases1"+File.separator;
             File dirFirstFolder=new File(pathfolder);
@@ -75,6 +80,7 @@ public class MyApplication extends Application{
                 Log.i("MyApp","mkdirs");
             }
             Log.i("MyApp","db is not exists");
+//            把db内容写入android db中
             try {
                 InputStream inputStream = getAssets().open("city.db");
                 FileOutputStream fileOutputStream = new FileOutputStream(db);
