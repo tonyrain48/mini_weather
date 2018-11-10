@@ -6,15 +6,20 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.drawable.Drawable;
+import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.baidu.location.LocationClient;
+import com.baidu.location.LocationClientOption;
 import com.wxydsb.myweather.R;
 import com.wxydsb.myweather.bean.TodayWeather;
 import com.wxydsb.myweather.util.NetUtil;
@@ -30,17 +35,35 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
 //主页面
 public class MainActivity extends Activity implements View.OnClickListener{
 
-    private static final int UPDATE_TODAY_WEATHER=1;
+    private static final int UPDATE_TODAY_WEATHER=1,DB=2;
 
     private ImageView mUpdateBtn;
 
-    private  ImageView mCitySelect;
+    private ImageView mCitySelect;
+
+    private ImageView mLocation;
+
+    private ViewPager mViewPager;
+
+    private List<View> views;
+
+    private String type;
 
     private TextView cityTv,timeTv,humidtyTv,weekTv,pmDataTv,pmQualityTv,temperatureTv,temperatuer_cur_Tv,climateTv,windTv,city_name_Tv;
+    private TextView dayone_dateTv,dayone_tempTv,dayone_typeTv,dayone_fengliTv,daytwo_dateTv,daytwo_tempTv,daytwo_typeTv,daytwo_fengliTv,daythree_dateTv,daythree_tempTv,daythree_typeTv,daythree_fengliTv,dayfour_dateTv,dayfour_tempTv,dayfour_typeTv,dayfour_fengliTv;
     private ImageView weatherImg,pmImg;
+    private ImageView dayone_Img,daytwo_Img,daythree_Img,dayfour_Img;
+
+    private MyPagerAdapter myPagerAdapter;
+
+    public LocationClient mLocationClient=null;
+    private MyLocationListener myLocationListener=new MyLocationListener();
 
 //    传递消息
     private Handler mHandler=new Handler(){
@@ -66,10 +89,24 @@ public class MainActivity extends Activity implements View.OnClickListener{
 //        永久保存
         SharedPreferences sharedPreferencesmain=getSharedPreferences("config",MODE_PRIVATE);
         SharedPreferences.Editor editor= sharedPreferencesmain.edit();
-        String cityCodemain=sharedPreferencesmain.getString("main_city_code","101010100");
+        String cityCodemain=sharedPreferencesmain.getString("main_city_code",null);
+        if(cityCodemain==null){
+            editor.clear();
+            editor.putString("main_city_code","101010100");
+            editor.commit();
+
+        }
 
         mUpdateBtn=(ImageView) findViewById(R.id.title_update_btn);
         mUpdateBtn.setOnClickListener(this);
+
+        mLocation=(ImageView) findViewById(R.id.title_location);
+        mLocation.setOnClickListener(this);
+
+        mLocationClient=new LocationClient(getApplicationContext());
+        mLocationClient.registerLocationListener(myLocationListener);
+        initLocation();
+        mLocationClient.start();
 
 //        网络状态检测
         if(NetUtil.getNetworkState(this)!=NetUtil.NETWORK_NONE){
@@ -84,11 +121,15 @@ public class MainActivity extends Activity implements View.OnClickListener{
 
         mCitySelect=(ImageView) findViewById(R.id.title_city_manager);
         mCitySelect.setOnClickListener(this);
+
+        initViewPager();
         initView();
     }
 
 //    初始化视图
     void initView(){
+        View view1=LayoutInflater.from(this).inflate(R.layout.viewpager1,null);
+        View view2=LayoutInflater.from(this).inflate(R.layout.viewpager2,null);
         city_name_Tv=(TextView) findViewById(R.id.title_city_name);
         cityTv=(TextView) findViewById(R.id.city);
         timeTv=(TextView) findViewById(R.id.time);
@@ -116,7 +157,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
     }
 
 //    通过网站抓取天气信息
-    private void queryWeatherCode(String cityCode){
+    private void queryWeatherCode(final String cityCode){
         final String address="http://wthrcdn.etouch.cn/WeatherApi?citykey="+cityCode;
         Log.d("myweather",address);
 //        用线程去后台读取数据
@@ -241,6 +282,106 @@ public class MainActivity extends Activity implements View.OnClickListener{
                                 todayWeather.setType(xmlPullParser.getText());
                                 typeCount++;
                             }
+                            else if(xmlPullParser.getName().equals("date") && dateCount==1){
+                                eventType=xmlPullParser.next();
+                                todayWeather.setDayone_date(xmlPullParser.getText());
+                                dateCount++;
+                            }
+                            else if(xmlPullParser.getName().equals("high") && highCount==1){
+                                eventType=xmlPullParser.next();
+                                todayWeather.setDayone_high(xmlPullParser.getText().substring(2).trim());
+                                highCount++;
+                            }
+                            else if(xmlPullParser.getName().equals("low") && lowCount==1){
+                                eventType=xmlPullParser.next();
+                                todayWeather.setDayone_low(xmlPullParser.getText().substring(2).trim());
+                                lowCount++;
+                            }
+                            else if(xmlPullParser.getName().equals("type") && typeCount==1){
+                                eventType=xmlPullParser.next();
+                                todayWeather.setDayone_type(xmlPullParser.getText());
+                                typeCount++;
+                            }
+                            else if(xmlPullParser.getName().equals("fengli") && fengliCount==1){
+                                eventType=xmlPullParser.next();
+                                todayWeather.setDayone_fengli(xmlPullParser.getText());
+                                fengliCount++;
+                            }
+                            else if(xmlPullParser.getName().equals("date") && dateCount==2){
+                                eventType=xmlPullParser.next();
+                                todayWeather.setDaytwo_date(xmlPullParser.getText());
+                                dateCount++;
+                            }
+                            else if(xmlPullParser.getName().equals("high") && highCount==2){
+                                eventType=xmlPullParser.next();
+                                todayWeather.setDaytwo_high(xmlPullParser.getText().substring(2).trim());
+                                highCount++;
+                            }
+                            else if(xmlPullParser.getName().equals("low") && lowCount==2){
+                                eventType=xmlPullParser.next();
+                                todayWeather.setDaytwo_low(xmlPullParser.getText().substring(2).trim());
+                                lowCount++;
+                            }
+                            else if(xmlPullParser.getName().equals("type") && typeCount==2){
+                                eventType=xmlPullParser.next();
+                                todayWeather.setDaytwo_type(xmlPullParser.getText());
+                                typeCount++;
+                            }
+                            else if(xmlPullParser.getName().equals("fengli") && fengliCount==2){
+                                eventType=xmlPullParser.next();
+                                todayWeather.setDaytwo_fengli(xmlPullParser.getText());
+                                fengliCount++;
+                            }
+                            else if(xmlPullParser.getName().equals("date") && dateCount==3){
+                                eventType=xmlPullParser.next();
+                                todayWeather.setDaythree_date(xmlPullParser.getText());
+                                dateCount++;
+                            }
+                            else if(xmlPullParser.getName().equals("high") && highCount==3){
+                                eventType=xmlPullParser.next();
+                                todayWeather.setDaythree_high(xmlPullParser.getText().substring(2).trim());
+                                highCount++;
+                            }
+                            else if(xmlPullParser.getName().equals("low") && lowCount==3){
+                                eventType=xmlPullParser.next();
+                                todayWeather.setDaythree_low(xmlPullParser.getText().substring(2).trim());
+                                lowCount++;
+                            }
+                            else if(xmlPullParser.getName().equals("type") && typeCount==3){
+                                eventType=xmlPullParser.next();
+                                todayWeather.setDaythree_type(xmlPullParser.getText());
+                                typeCount++;
+                            }
+                            else if(xmlPullParser.getName().equals("fengli") && fengliCount==3){
+                                eventType=xmlPullParser.next();
+                                todayWeather.setDaythree_fengli(xmlPullParser.getText());
+                                fengliCount++;
+                            }
+                            else if(xmlPullParser.getName().equals("date") && dateCount==4){
+                                eventType=xmlPullParser.next();
+                                todayWeather.setDayfour_date(xmlPullParser.getText());
+                                dateCount++;
+                            }
+                            else if(xmlPullParser.getName().equals("high") && highCount==4){
+                                eventType=xmlPullParser.next();
+                                todayWeather.setDayfour_high(xmlPullParser.getText().substring(2).trim());
+                                highCount++;
+                            }
+                            else if(xmlPullParser.getName().equals("low") && lowCount==4){
+                                eventType=xmlPullParser.next();
+                                todayWeather.setDayfour_low(xmlPullParser.getText().substring(2).trim());
+                                lowCount++;
+                            }
+                            else if(xmlPullParser.getName().equals("type") && typeCount==4){
+                                eventType=xmlPullParser.next();
+                                todayWeather.setDayfour_type(xmlPullParser.getText());
+                                typeCount++;
+                            }
+                            else if(xmlPullParser.getName().equals("fengli") && fengliCount==4){
+                                eventType=xmlPullParser.next();
+                                todayWeather.setDayfour_fengli(xmlPullParser.getText());
+                                fengliCount++;
+                            }
                         }
                         break;
                     case XmlPullParser.END_TAG:
@@ -282,13 +423,32 @@ public class MainActivity extends Activity implements View.OnClickListener{
         climateTv.setText(todayWeather.getType());
         windTv.setText("风力："+todayWeather.getFengli());
         pmImg.setImageDrawable(setpmImg(todayWeather));
-        weatherImg.setImageDrawable(setweatherImg(todayWeather));
+        weatherImg.setImageDrawable(setweatherImg(todayWeather.getType()));
+        dayone_dateTv.setText(todayWeather.getDayone_date());
+        dayone_Img.setImageDrawable(setweatherImg(todayWeather.getDayone_type()));
+        dayone_fengliTv.setText(todayWeather.getDayone_fengli());
+        dayone_typeTv.setText(todayWeather.getDayone_type());
+        dayone_tempTv.setText(todayWeather.getDayone_high()+'~'+todayWeather.getDayone_low());
+        daytwo_dateTv.setText(todayWeather.getDaytwo_date());
+        daytwo_Img.setImageDrawable(setweatherImg(todayWeather.getDaytwo_type()));
+        daytwo_fengliTv.setText(todayWeather.getDaytwo_fengli());
+        daytwo_typeTv.setText(todayWeather.getDaytwo_type());
+        daytwo_tempTv.setText(todayWeather.getDaytwo_high()+'~'+todayWeather.getDaytwo_low());
+        daythree_dateTv.setText(todayWeather.getDaythree_date());
+        daythree_Img.setImageDrawable(setweatherImg(todayWeather.getDaythree_type()));
+        daythree_fengliTv.setText(todayWeather.getDaythree_fengli());
+        daythree_typeTv.setText(todayWeather.getDaythree_type());
+        daythree_tempTv.setText(todayWeather.getDaythree_high()+'~'+todayWeather.getDaytwo_low());
+        dayfour_dateTv.setText(todayWeather.getDayfour_date());
+        dayfour_Img.setImageDrawable(setweatherImg(todayWeather.getDayfour_type()));
+        dayfour_fengliTv.setText(todayWeather.getDayfour_fengli());
+        dayfour_typeTv.setText(todayWeather.getDayfour_type());
+        dayfour_tempTv.setText(todayWeather.getDayfour_high()+'~'+todayWeather.getDayfour_low());
         Toast.makeText(MainActivity.this,"更新成功",Toast.LENGTH_SHORT).show();
     }
 
 //    修改天气图片
-    private Drawable setweatherImg(TodayWeather todayWeather){
-        String type=todayWeather.getType();
+    private Drawable setweatherImg(String type){
         Drawable typedrawable;
         switch (type) {
             case "暴雪":
@@ -404,10 +564,23 @@ public class MainActivity extends Activity implements View.OnClickListener{
             SharedPreferences sharedPreferences=getSharedPreferences("config",MODE_PRIVATE);
             String cityCode=sharedPreferences.getString("main_city_code","101010100");
             Log.d("myweather",cityCode);
+            Log.d("click","true");
 
             if(NetUtil.getNetworkState(this)!=NetUtil.NETWORK_NONE){
                 Log.d("myweather","网络已连接");
                 queryWeatherCode(cityCode);
+            }
+            else{
+                Log.d("myweather","网络未连接");
+                Toast.makeText(MainActivity.this, "网络未连接", Toast.LENGTH_LONG).show();
+            }
+        }
+        if(view.getId()==R.id.title_location){
+            String cityCode_location=myLocationListener.cityCode;
+            Log.d("click","true");
+            if(NetUtil.getNetworkState(this)!=NetUtil.NETWORK_NONE){
+                Log.d("myweather","网络已连接");
+                queryWeatherCode(cityCode_location);
             }
             else{
                 Log.d("myweather","网络未连接");
@@ -420,6 +593,11 @@ public class MainActivity extends Activity implements View.OnClickListener{
     protected void onActivityResult(int requestCode,int resultCode,Intent data){
         if(requestCode==1&&resultCode==RESULT_OK){
             String newCityCode=data.getStringExtra("cityCode");
+            SharedPreferences sharedPreferences=getSharedPreferences("config",MODE_PRIVATE);
+            SharedPreferences.Editor editor=sharedPreferences.edit();
+            editor.putString("main_city_code",newCityCode);
+            editor.commit();
+
             Log.d("myweather","选择的城市代码为"+newCityCode);
 
             if(NetUtil.getNetworkState(this)!=NetUtil.NETWORK_NONE){
@@ -432,5 +610,68 @@ public class MainActivity extends Activity implements View.OnClickListener{
             }
         }
 
+    }
+
+    private void initLocation(){
+        LocationClientOption option=new LocationClientOption();
+        option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);
+        option.setCoorType("bd09ll");
+        int span=1000;
+        option.setScanSpan(0);
+        option.setIsNeedAddress(true);
+        option.setOpenGps(true);
+        option.setLocationNotify(true);
+        option.setIsNeedLocationDescribe(true);
+        option.setIsNeedLocationPoiList(true);
+        option.setIgnoreKillProcess(false);
+        option.SetIgnoreCacheException(false);
+        option.setEnableSimulateGps(false);
+        mLocationClient.setLocOption(option);
+    }
+
+    private void initViewPager(){
+        mViewPager=(ViewPager) findViewById(R.id.viewpager);
+        LayoutInflater lf=LayoutInflater.from(this);
+        views=new ArrayList<View>();
+        views.add(lf.inflate(R.layout.viewpager1,null));
+        views.add(lf.inflate(R.layout.viewpager2,null));
+        dayone_dateTv=(TextView) views.get(0).findViewById(R.id.week_dayone);
+        dayone_tempTv=(TextView) views.get(0).findViewById(R.id.temp_dayone);
+        dayone_typeTv=(TextView) views.get(0).findViewById(R.id.climate_dayone);
+        dayone_fengliTv=(TextView) views.get(0).findViewById(R.id.wind_dayone);
+        dayone_Img=(ImageView) views.get(0).findViewById(R.id.pic_dayone);
+        daytwo_dateTv=(TextView) views.get(0).findViewById(R.id.week_daytwo);
+        daytwo_tempTv=(TextView) views.get(0).findViewById(R.id.temp_daytwo);
+        daytwo_typeTv=(TextView) views.get(0).findViewById(R.id.climate_daytwo);
+        daytwo_fengliTv=(TextView) views.get(0).findViewById(R.id.wind_daytwo);
+        daytwo_Img=(ImageView) views.get(0).findViewById(R.id.pic_daytwo);
+        daythree_dateTv=(TextView) views.get(1).findViewById(R.id.week_daythree);
+        daythree_tempTv=(TextView) views.get(1).findViewById(R.id.temp_daythree);
+        daythree_typeTv=(TextView) views.get(1).findViewById(R.id.climate_daythree);
+        daythree_fengliTv=(TextView) views.get(1).findViewById(R.id.wind_daythree);
+        daythree_Img=(ImageView) views.get(1).findViewById(R.id.pic_daythree);
+        dayfour_dateTv=(TextView) views.get(1).findViewById(R.id.week_dayfour);
+        dayfour_tempTv=(TextView) views.get(1).findViewById(R.id.temp_dayfour);
+        dayfour_typeTv=(TextView) views.get(1).findViewById(R.id.climate_dayfour);
+        dayfour_fengliTv=(TextView) views.get(1).findViewById(R.id.wind_dayfour);
+        dayfour_Img=(ImageView) views.get(1).findViewById(R.id.pic_dayfour);
+        dayone_dateTv.setText("N/A");
+        dayone_tempTv.setText("N/A");
+        dayone_typeTv.setText("N/A");
+        dayone_fengliTv.setText("N/A");
+        daytwo_dateTv.setText("N/A");
+        daytwo_tempTv.setText("N/A");
+        daytwo_typeTv.setText("N/A");
+        daytwo_fengliTv.setText("N/A");
+        daythree_dateTv.setText("N/A");
+        daythree_tempTv.setText("N/A");
+        daythree_typeTv.setText("N/A");
+        daythree_fengliTv.setText("N/A");
+        dayfour_dateTv.setText("N/A");
+        dayfour_tempTv.setText("N/A");
+        dayfour_typeTv.setText("N/A");
+        dayfour_fengliTv.setText("N/A");
+        myPagerAdapter=new MyPagerAdapter(views);
+        mViewPager.setAdapter(myPagerAdapter);
     }
 }

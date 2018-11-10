@@ -28,7 +28,21 @@
             <include layout="@layout/weather_today"/>
         </RelativeLayout>
         <!--未来七天天气-->
-
+        <LinearLayout
+            android:id="@+id/weather_viewpager"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_below="@id/weather_today"
+            android:orientation="vertical">
+            <android.support.v4.view.ViewPager
+                android:id="@+id/viewpager"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top">
+            </android.support.v4.view.ViewPager>
+        </LinearLayout>
         <!--其他信息-->
     </LinearLayout>
+
 </RelativeLayout>
